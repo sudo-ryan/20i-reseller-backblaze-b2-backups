@@ -1,0 +1,5 @@
+{
+    "require": {
+        "cwhite92/b2-sdk-php": "^1.2"
+    }
+}
