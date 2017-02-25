@@ -20,7 +20,10 @@ class TwentyIBackupManager
      * @var \ChrisWhite\B2\Client
      */
     private $backblazeClient;
-
+    
+    /**
+     * @var array
+     */
     private $sites;
 
     // 20i account details
@@ -54,7 +57,7 @@ class TwentyIBackupManager
     {
         $this->hostClient      = new \TwentyI\Stack\MyREST(self::BEARER_TOKEN);
         $this->backblazeClient = new BackBlazeClient(self::ACCOUNT_ID, self::APP_KEY);
-        $this->sites = $this->getSites();
+        $this->sites           = $this->getSites();
     }
 
     /**
@@ -105,10 +108,12 @@ class TwentyIBackupManager
 
             $result = $this->hostClient->postWithFields($this->endpoint("package/" . $site->id . "/web/websiteBackup"), $this->whatToBackup);
 
-            if ($result->result) {
+            if (isset($result->result)) {
                 echo "[$logPrefix] ⚡  Backup scheduled for {$site->name}\n";
             }
         }
+      
+        return true;
     }
 
     /**
@@ -133,14 +138,21 @@ class TwentyIBackupManager
 
         echo 'Found ' . count($sites) . ' sites under this account, checking if we have backups...' . "\n";
         echo "---------------------------------------------------------------------------------------\n";
+      
+        $processed = [];
 
         foreach ($sites as $site) {
 
             if ($site->name === self::BACKUP_ACCOUNT_DOMAIN) {
                 continue;
+            } else if (in_array($site->id, $processed)) {
+                continue;
             }
+          
+            $processed[] = $site->id;
 
             $backup = $this->hostClient->getWithFields($this->endpoint('package/' . $site->id . '/web/websiteBackup'));
+
             if (isset($backup, $backup->download_link)) {
                 $backupDate = date("d-m-Y-H-i-s", strtotime($backup->created_at));
                 $filename = $site->name . '_' . $backupDate . '.zip';
@@ -153,6 +165,8 @@ class TwentyIBackupManager
                 }
             }
         }
+      
+        return true;
     }
 
     /**
@@ -170,27 +184,39 @@ class TwentyIBackupManager
         }
 
         $backups = array_diff(scandir(self::BACKUP_DIR), array('..', '.'));
-
+      
+        $processed = [];
+      
         foreach ($backups as $backup) {
+
+            if (in_array($backup, $processed)) {
+                continue;
+            }
+          
+            $processed[] = $backup;
 
             echo "[$logPrefix] ⚡  Upload initiated for backup $backup \n";
 
             $localfile  = self::BACKUP_DIR . '/' . $backup;
             $remotefile = date('d-m-Y') . '/' . $backup;
-
-            $upload = $this->backblazeClient->upload([
-            	'BucketName' => self::BUCKET_NAME,
-            	'FileName'   => $remotefile,
-            	'Body'       => fopen($localfile, 'r'),
-         	]);
-
-            if (!is_null($upload->getId())) {
-                echo "[$logPrefix] ✅  Uploaded backup $backup (" . $this->formatBytes($upload->getSize()) . ") to backblaze folder '" . date('d-m-Y') . "', deleting local copy\n";
-                if (is_file($localfile)) {
-                    unlink($localfile);
+          
+            $fileHandle = fopen($localfile, 'r');
+          
+            if ($fileHandle) {
+                $upload = $this->backblazeClient->upload([
+                    'BucketName' => self::BUCKET_NAME,
+                    'FileName'   => $remotefile,
+                    'Body'       => fopen($localfile, 'r'),
+                ]);
+              
+              	if ($upload) {
+                    echo "[$logPrefix] ✅  Uploaded backup $backup (" . $this->formatBytes($upload->getSize()) . ") to backblaze folder '" . date('d-m-Y') . "', deleting local copy\n";
+                	unlink($localfile); 
                 }
             }
         }
+      
+      	return true;
     }
 
     /**
@@ -253,6 +279,8 @@ class TwentyIBackupManager
                 }
             }
         }
+      
+        return true;
     }
 
     /**
@@ -268,8 +296,8 @@ class TwentyIBackupManager
                 break;
             case 'download':
                 $this->downloadBackups();
-                $this->transferBackups();
-                break;
+            	$this->transferBackups();
+            	break;
             case 'cleanup':
                 $this->deleteOldBackups();
                 break;
