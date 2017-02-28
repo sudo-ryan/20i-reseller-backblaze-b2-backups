@@ -25,6 +25,11 @@ class TwentyIBackupManager
      * @var array
      */
     private $sites;
+    
+    /**
+     * @var array
+     */
+    private $excludedSites = [];
 
     // 20i account details
     const API_BASE     = 'https://api.20i.com';
@@ -35,9 +40,6 @@ class TwentyIBackupManager
     const ACCOUNT_ID   = '';
     const APP_KEY      = '';
     const BUCKET_NAME  = '';
-
-    // skip our dedicated backup account, dont want to backup backups!
-    const BACKUP_ACCOUNT_DOMAIN = '';
 
     // backup config
     const DELETE_BACKUPS_OLDER_THAN = '1 month';
@@ -102,7 +104,7 @@ class TwentyIBackupManager
 
         foreach ($sites as $site) {
 
-            if ($site->name === self::BACKUP_ACCOUNT_DOMAIN) {
+            if (in_array($site->name, $this->excludedSites)) {
                 continue;
             }
 
@@ -143,7 +145,7 @@ class TwentyIBackupManager
 
         foreach ($sites as $site) {
 
-            if ($site->name === self::BACKUP_ACCOUNT_DOMAIN) {
+            if (in_array($site->name, $this->excludedSites)) {
                 continue;
             } else if (in_array($site->id, $processed)) {
                 continue;
