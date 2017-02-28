@@ -12,7 +12,7 @@
 1. Create an account within 20i's control panel which you will only use for backups - random domain?
 2. Download this script (I've bundled the vendor folder for those not familiar with composer)
 3. Copy this script and associated files into public_html
-4. Update the configuration details in `backup.php` - you can obtain your API bearer token from your 20i control panel. Set the BACKUP_ACCOUNT_DOMAIN to that of the domain you're using for your backup account to prevent it from being backed up. You don't want to backup your backups in this scenario)
+4. Update the configuration details in `manager.php` - you can obtain your API bearer token from your 20i control panel. Add the domain you're using for your backup account to prevent it from being backed up to $excludedBackups in manager.php. You don't want to backup your backups in this scenario)
 4. Create a "Scheduled Task" for the backup schedule (Set to run every day at 12pm and enable email notifications):
         `/usr/bin/php71 FOLDER_PATH/public_html/manager.php -a backup`
 5. Create a "Scheduled Task" for the download and upload to backblaze schedule (Set to run every day at 6am and enable email notifications):
