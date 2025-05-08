@@ -1,3 +1,6 @@
+> [!WARNING]  
+> As highlighted in issue https://github.com/sudo-ryan/20i-reseller-backblaze-b2-backups/issues/20, 20i have confirmed backup/restore functionality via their API has been removed, meaning the script will no longer work as a result.
+
 # 20i reseller hosting - Backblaze B2 backups
 20i reseller hosting only take backups for disaster recovery which are not available to resellers, snapshot backups are available however start at £9.99 for 50 sites. Since backblaze is $0.005 per GB and you can backup unlimited sites with this script, it's cheaper and means you have your data available outside of their network.
 
